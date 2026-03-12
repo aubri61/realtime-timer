@@ -1,63 +1,53 @@
-<main class="pomodoro-root">
-  <section class="pomodoro-card">
-    <header class="pomodoro-header">
-      <h1>Realtime Pomodoro Timer</h1>
-      <p class="subtitle">집중하고, 쉬고, 리듬을 유지하세요.</p>
-    </header>
+<main class="app-root">
+  <section class="timer-container" aria-label="뽀모도로 타이머">
+    <div class="duration-controls">
+      <label class="field">
+        <span class="field-label">집중 시간</span>
+        <select
+          [value]="focusMinutes()"
+          (change)="updateFocusMinutes($event)"
+        >
+          <option
+            *ngFor="let m of focusOptions"
+            [value]="m"
+          >
+            {{ m }}분
+          </option>
+        </select>
+      </label>
 
-    <nav class="mode-tabs" aria-label="타이머 모드 선택">
-      <button
-        type="button"
-        class="mode-tab"
-        [class.active]="mode() === 'work'"
-        (click)="setMode('work')"
-      >
-        집중 (25분)
+      <label class="field">
+        <span class="field-label">휴게 시간</span>
+        <select
+          [value]="breakMinutes()"
+          (change)="updateBreakMinutes($event)"
+        >
+          <option
+            *ngFor="let m of breakOptions"
+            [value]="m"
+          >
+            {{ m }}분
+          </option>
+        </select>
+      </label>
+
+      <button type="button" class="overlay" (click)="toggleOverlay()">
+        오버레이
       </button>
-      <button
-        type="button"
-        class="mode-tab"
-        [class.active]="mode() === 'short-break'"
-        (click)="setMode('short-break')"
-      >
-        짧은 휴식 (5분)
+    </div>
+
+    <div class="timer-display">
+      <div class="mode-label">{{ modeLabel() }}</div>
+      <div class="time">{{ formattedTime() }}</div>
+    </div>
+
+    <div class="timer-controls">
+      <button type="button" class="primary" (click)="toggleTimer()">
+        {{ isRunning() ? '일시정지' : '시작' }}
       </button>
-      <button
-        type="button"
-        class="mode-tab"
-        [class.active]="mode() === 'long-break'"
-        (click)="setMode('long-break')"
-      >
-        긴 휴식 (15분)
+      <button type="button" class="secondary" (click)="reset()">
+        리셋
       </button>
-    </nav>
-
-    <section class="timer-section" aria-label="뽀모도로 타이머">
-      <div class="timer-display">
-        <span class="time">{{ formattedTime() }}</span>
-        <span class="mode-label">{{ modeLabel() }}</span>
-      </div>
-
-      <div class="timer-controls">
-        <button type="button" class="primary" (click)="toggleTimer()">
-          {{ isRunning() ? '일시정지' : '시작' }}
-        </button>
-        <button type="button" class="ghost" (click)="reset()">
-          리셋
-        </button>
-      </div>
-    </section>
-
-    <footer class="pomodoro-footer">
-      <div class="stat">
-        <span class="stat-label">완료한 집중 세션</span>
-        <span class="stat-value">{{ completedPomodoros() }}</span>
-      </div>
-      <p class="hint">
-        집중 세션이 끝나면 자동으로 휴식 모드로 전환되고, 휴식이 끝나면 다시
-        집중 모드로 돌아옵니다.
-      </p>
-    </footer>
+    </div>
   </section>
 </main>
-

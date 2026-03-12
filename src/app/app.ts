@@ -1,4 +1,5 @@
 import { Component, OnDestroy, computed, signal } from '@angular/core';
+import { NgFor } from '@angular/common';
 
 type PomodoroMode = 'work' | 'short-break' | 'long-break';
 
@@ -6,18 +7,27 @@ const WORK_MINUTES = 25;
 const SHORT_BREAK_MINUTES = 5;
 const LONG_BREAK_MINUTES = 15;
 
+const FOCUS_OPTIONS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+const BREAK_OPTIONS = [5, 10, 15, 20, 25, 30];
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [],
+  imports: [NgFor],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App implements OnDestroy {
+  protected readonly focusMinutes = signal(WORK_MINUTES);
+  protected readonly breakMinutes = signal(SHORT_BREAK_MINUTES);
   protected readonly mode = signal<PomodoroMode>('work');
   protected readonly isRunning = signal(false);
   protected readonly remainingSeconds = signal(WORK_MINUTES * 60);
   protected completedPomodoros = signal(0);
+
+  protected readonly focusOptions = FOCUS_OPTIONS;
+  protected readonly breakOptions = BREAK_OPTIONS;
+  protected readonly overlayEnabled = signal(false);
 
   private timerId: ReturnType<typeof setInterval> | null = null;
 
@@ -41,6 +51,30 @@ export class App implements OnDestroy {
     return `${minutes}:${seconds}`;
   });
 
+  protected updateFocusMinutes(event: Event) {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (!value) {
+      return;
+    }
+    this.focusMinutes.set(value);
+
+    if (this.mode() === 'work' && !this.isRunning()) {
+      this.remainingSeconds.set(value * 60);
+    }
+  }
+
+  protected updateBreakMinutes(event: Event) {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (!value) {
+      return;
+    }
+    this.breakMinutes.set(value);
+
+    if (this.mode() !== 'work' && !this.isRunning()) {
+      this.remainingSeconds.set(this.getDurationForMode(this.mode()) * 60);
+    }
+  }
+
   protected setMode(mode: PomodoroMode) {
     this.mode.set(mode);
     this.isRunning.set(false);
@@ -60,6 +94,15 @@ export class App implements OnDestroy {
     this.isRunning.set(false);
     this.clearTimer();
     this.remainingSeconds.set(this.getDurationForMode(this.mode()) * 60);
+  }
+
+  protected async toggleOverlay() {
+    const api = window.electronAPI;
+    if (!api) {
+      return;
+    }
+    const next = await api.toggleOverlay();
+    this.overlayEnabled.set(next);
   }
 
   private start() {
@@ -107,11 +150,11 @@ export class App implements OnDestroy {
   private getDurationForMode(mode: PomodoroMode) {
     switch (mode) {
       case 'work':
-        return WORK_MINUTES;
+        return this.focusMinutes();
       case 'short-break':
-        return SHORT_BREAK_MINUTES;
+        return this.breakMinutes();
       case 'long-break':
-        return LONG_BREAK_MINUTES;
+        return this.breakMinutes() * 3;
     }
   }
 

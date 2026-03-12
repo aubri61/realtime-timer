@@ -8,7 +8,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "electron": "npm run build && electron ."
+    "electron": "npm run build && electron .",
+    "electron-dev": "electron ."
   },
   "private": true,
   "packageManager": "npm@10.8.2",
