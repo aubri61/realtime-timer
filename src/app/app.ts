@@ -1,5 +1,5 @@
 import { Component, OnDestroy, computed, signal } from '@angular/core';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 
 type PomodoroMode = 'work' | 'short-break' | 'long-break';
 
@@ -28,10 +28,12 @@ const FOCUS_SECONDS_OPTIONS = [
 
 const BREAK_SECONDS_OPTIONS = [5, 5 * 60, 10 * 60, 15 * 60, 20 * 60, 25 * 60, 30 * 60];
 
+const SOUND_OPTIONS = ['Ping', 'Glass', 'Hero', 'Funk', 'Pop', 'Submarine', 'Basso', 'Sosumi'];
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NgFor],
+  imports: [NgFor, NgIf],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -45,8 +47,26 @@ export class App implements OnDestroy {
 
   protected readonly focusOptionsSeconds = FOCUS_SECONDS_OPTIONS;
   protected readonly breakOptionsSeconds = BREAK_SECONDS_OPTIONS;
+  protected readonly soundOptions = SOUND_OPTIONS;
+  protected readonly workSound = signal<string>('Ping');
+  protected readonly breakSound = signal<string>('Ping');
+
   protected readonly overlayEnabled = signal(false);
+  protected readonly showSettings = signal(false);
   private timerId: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const savedWork = window.localStorage.getItem('workSound');
+      const savedBreak = window.localStorage.getItem('breakSound');
+      if (savedWork && SOUND_OPTIONS.includes(savedWork)) {
+        this.workSound.set(savedWork);
+      }
+      if (savedBreak && SOUND_OPTIONS.includes(savedBreak)) {
+        this.breakSound.set(savedBreak);
+      }
+    }
+  }
 
   protected readonly modeLabel = computed(() => {
     switch (this.mode()) {
@@ -67,6 +87,46 @@ export class App implements OnDestroy {
     const seconds = (total % 60).toString().padStart(2, '0');
     return `${minutes}:${seconds}`;
   });
+
+  protected toggleSettings() {
+    this.showSettings.update((v) => !v);
+  }
+
+  protected updateWorkSound(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    if (!value) return;
+    this.workSound.set(value);
+    this.playPreview(value);
+  }
+
+  protected updateBreakSound(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    if (!value) return;
+    this.breakSound.set(value);
+    this.playPreview(value);
+  }
+
+  protected saveSettings() {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('workSound', this.workSound());
+      window.localStorage.setItem('breakSound', this.breakSound());
+    }
+    this.showSettings.set(false);
+  }
+
+  protected cancelSettings() {
+    if (typeof window !== 'undefined') {
+      const savedWork = window.localStorage.getItem('workSound');
+      const savedBreak = window.localStorage.getItem('breakSound');
+      if (savedWork && SOUND_OPTIONS.includes(savedWork)) {
+        this.workSound.set(savedWork);
+      }
+      if (savedBreak && SOUND_OPTIONS.includes(savedBreak)) {
+        this.breakSound.set(savedBreak);
+      }
+    }
+    this.showSettings.set(false);
+  }
 
   protected updateFocusSeconds(event: Event) {
     const value = Number((event.target as HTMLSelectElement).value);
@@ -121,6 +181,13 @@ export class App implements OnDestroy {
     }
     const next = await api.toggleOverlay();
     this.overlayEnabled.set(next);
+  }
+
+  protected playPreview(name: string) {
+    if (typeof window === 'undefined') return;
+    const api = window.electronAPI;
+    if (!api || typeof api.playSystemSound !== 'function') return;
+    api.playSystemSound(name);
   }
 
   private start() {
@@ -188,14 +255,14 @@ export class App implements OnDestroy {
       return;
     }
 
-    try {
-      const audio = new Audio('beep.mp3');
-      audio.volume = 1;
-      // 재생 실패(사용자 제스처 필요 등)는 무시
-      audio.play().catch(() => undefined);
-    } catch {
-      // 무시
+    const api = window.electronAPI;
+    if (!api || typeof api.playSystemSound !== 'function') {
+      return;
     }
+
+    const mode = this.mode();
+    const soundName = mode === 'work' ? this.workSound() : this.breakSound();
+    api.playSystemSound(soundName);
   }
 
   ngOnDestroy() {

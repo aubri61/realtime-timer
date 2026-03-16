@@ -1,4 +1,12 @@
-<main class="app-root">
+<main class="app-root" *ngIf="!showSettings(); else settingsView">
+  <button
+    type="button"
+    class="settings-button"
+    (click)="toggleSettings()"
+    aria-label="설정 열기"
+  >
+    ⚙︎
+  </button>
   <section class="timer-container" aria-label="뽀모도로 타이머">
     <div class="duration-controls">
       <label class="field">
@@ -58,5 +66,65 @@
       </button>
     </div>
   </section>
-
 </main>
+
+<ng-template #settingsView>
+  <main class="app-root">
+    <section class="settings-container" aria-label="설정">
+      <header class="settings-header">
+        <h1>알림음 선택</h1>
+      </header>
+
+      <div class="settings-body">
+        <label class="field">
+          <span class="field-label">집중시간 종료 알림음</span>
+          <select
+            [value]="workSound()"
+            (change)="updateWorkSound($event)"
+          >
+            <option *ngFor="let s of soundOptions" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+          <button
+            type="button"
+            class="preview-button"
+            (click)="playPreview(workSound())"
+            aria-label="집중시간 알림음 미리듣기"
+          >
+            ▶︎
+          </button>
+        </label>
+
+        <label class="field">
+          <span class="field-label">휴식시간 종료 알림음</span>
+          <select
+            [value]="breakSound()"
+            (change)="updateBreakSound($event)"
+          >
+            <option *ngFor="let s of soundOptions" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+          <button
+            type="button"
+            class="preview-button"
+            (click)="playPreview(breakSound())"
+            aria-label="휴식시간 알림음 미리듣기"
+          >
+            ▶︎
+          </button>
+        </label>
+      </div>
+
+      <footer class="settings-footer">
+        <button type="button" class="secondary" (click)="cancelSettings()">
+          취소
+        </button>
+        <button type="button" class="primary" (click)="saveSettings()">
+          확인
+        </button>
+      </footer>
+    </section>
+  </main>
+</ng-template>

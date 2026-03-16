@@ -12,6 +12,7 @@
   background: #ffffff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #111827;
+  position: relative;
 }
 
 .timer-container {
@@ -19,6 +20,23 @@
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
+}
+
+.settings-button {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.settings-button:hover {
+  background: #f3f4f6;
 }
 
 .duration-controls {
@@ -36,13 +54,16 @@
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.85rem;
   color: #4b5563;
 }
 
 .field-label {
+  grid-column: 1 / -1;
   margin-bottom: 0.25rem;
 }
 
@@ -118,5 +139,70 @@ select {
 }
 
 .timer-controls .secondary:hover {
+  background: #f3f4f6;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 260px;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-footer {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.settings-footer .primary,
+.settings-footer .secondary {
+  min-width: 110px;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #111827;
+  background: #ffffff;
+  color: #111827;
+}
+
+.settings-footer .primary {
+  background: #111827;
+  color: #ffffff;
+}
+
+.settings-footer .primary:hover {
+  background: #000000;
+}
+
+.settings-footer .secondary:hover {
+  background: #f3f4f6;
+}
+
+.preview-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.preview-button:hover {
   background: #f3f4f6;
 }

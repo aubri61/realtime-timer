@@ -8,6 +8,7 @@ const {
   Notification,
 } = require('electron');
 const path = require('path');
+const { exec } = require('child_process');
 
 let tray = null;
 let mainWindow = null;
@@ -142,10 +143,21 @@ app.whenReady().then(() => {
     const notification = new Notification({
       title,
       body,
-      silent: false, // macOS 기본 알림음을 사용
+      silent: true, // 소리는 직접 afplay로 재생하므로 무음 알림
     });
 
     notification.show();
+  });
+
+  ipcMain.handle('play-system-sound', async (_event, soundName) => {
+    if (process.platform !== 'darwin') {
+      return;
+    }
+
+    const safe = String(soundName).replace(/[^A-Za-z]/g, '');
+    if (!safe) return;
+
+    exec(`afplay "/System/Library/Sounds/${safe}.aiff"`);
   });
 
   app.on('activate', () => {
