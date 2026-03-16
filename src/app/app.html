@@ -4,14 +4,18 @@
       <label class="field">
         <span class="field-label">집중 시간</span>
         <select
-          [value]="focusMinutes()"
-          (change)="updateFocusMinutes($event)"
+          [value]="focusSeconds()"
+          (change)="updateFocusSeconds($event)"
         >
           <option
-            *ngFor="let m of focusOptions"
-            [value]="m"
+            *ngFor="let s of focusOptionsSeconds"
+            [value]="s"
           >
-            {{ m }}분
+            {{
+              s < 60
+                ? (s + '초 (테스트)')
+                : ((s / 60) + '분')
+            }}
           </option>
         </select>
       </label>
@@ -19,14 +23,18 @@
       <label class="field">
         <span class="field-label">휴게 시간</span>
         <select
-          [value]="breakMinutes()"
-          (change)="updateBreakMinutes($event)"
+          [value]="breakSeconds()"
+          (change)="updateBreakSeconds($event)"
         >
           <option
-            *ngFor="let m of breakOptions"
-            [value]="m"
+            *ngFor="let s of breakOptionsSeconds"
+            [value]="s"
           >
-            {{ m }}분
+            {{
+              s < 60
+                ? (s + '초 (테스트)')
+                : ((s / 60) + '분')
+            }}
           </option>
         </select>
       </label>
@@ -50,4 +58,5 @@
       </button>
     </div>
   </section>
+
 </main>

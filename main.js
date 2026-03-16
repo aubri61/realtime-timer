@@ -1,4 +1,12 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  nativeImage,
+  ipcMain,
+  Notification,
+} = require('electron');
 const path = require('path');
 
 let tray = null;
@@ -119,6 +127,26 @@ app.whenReady().then(() => {
     return next;
   });
   ipcMain.handle('overlay:get', () => overlayEnabled);
+
+  ipcMain.handle('timer:finished', (_event, mode) => {
+    if (!Notification.isSupported()) {
+      return;
+    }
+
+    const isWork = mode === 'work';
+    const title = isWork ? '집중 시간 종료' : '휴식 시간 종료';
+    const body = isWork
+      ? '집중 시간이 끝났어요. 잠시 휴식하세요.'
+      : '휴식이 끝났어요. 다시 집중을 시작해볼까요?';
+
+    const notification = new Notification({
+      title,
+      body,
+      silent: false, // macOS 기본 알림음을 사용
+    });
+
+    notification.show();
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

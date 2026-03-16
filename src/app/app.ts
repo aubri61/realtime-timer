@@ -3,12 +3,30 @@ import { NgFor } from '@angular/common';
 
 type PomodoroMode = 'work' | 'short-break' | 'long-break';
 
-const WORK_MINUTES = 25;
+const DEFAULT_FOCUS_SECONDS = 5;
+const DEFAULT_BREAK_SECONDS = 5;
+
 const SHORT_BREAK_MINUTES = 5;
 const LONG_BREAK_MINUTES = 15;
 
-const FOCUS_OPTIONS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
-const BREAK_OPTIONS = [5, 10, 15, 20, 25, 30];
+// 초 단위 테스트 옵션(5초, 10초) + 분 단위 실사용 옵션(10분~60분)
+const FOCUS_SECONDS_OPTIONS = [
+  5,
+  10,
+  10 * 60,
+  15 * 60,
+  20 * 60,
+  25 * 60,
+  30 * 60,
+  35 * 60,
+  40 * 60,
+  45 * 60,
+  50 * 60,
+  55 * 60,
+  60 * 60,
+];
+
+const BREAK_SECONDS_OPTIONS = [5, 5 * 60, 10 * 60, 15 * 60, 20 * 60, 25 * 60, 30 * 60];
 
 @Component({
   selector: 'app-root',
@@ -18,17 +36,16 @@ const BREAK_OPTIONS = [5, 10, 15, 20, 25, 30];
   styleUrl: './app.scss',
 })
 export class App implements OnDestroy {
-  protected readonly focusMinutes = signal(WORK_MINUTES);
-  protected readonly breakMinutes = signal(SHORT_BREAK_MINUTES);
+  protected readonly focusSeconds = signal(DEFAULT_FOCUS_SECONDS);
+  protected readonly breakSeconds = signal(DEFAULT_BREAK_SECONDS);
   protected readonly mode = signal<PomodoroMode>('work');
   protected readonly isRunning = signal(false);
-  protected readonly remainingSeconds = signal(WORK_MINUTES * 60);
+  protected readonly remainingSeconds = signal(DEFAULT_FOCUS_SECONDS);
   protected completedPomodoros = signal(0);
 
-  protected readonly focusOptions = FOCUS_OPTIONS;
-  protected readonly breakOptions = BREAK_OPTIONS;
+  protected readonly focusOptionsSeconds = FOCUS_SECONDS_OPTIONS;
+  protected readonly breakOptionsSeconds = BREAK_SECONDS_OPTIONS;
   protected readonly overlayEnabled = signal(false);
-
   private timerId: ReturnType<typeof setInterval> | null = null;
 
   protected readonly modeLabel = computed(() => {
@@ -51,27 +68,27 @@ export class App implements OnDestroy {
     return `${minutes}:${seconds}`;
   });
 
-  protected updateFocusMinutes(event: Event) {
+  protected updateFocusSeconds(event: Event) {
     const value = Number((event.target as HTMLSelectElement).value);
     if (!value) {
       return;
     }
-    this.focusMinutes.set(value);
+    this.focusSeconds.set(value);
 
     if (this.mode() === 'work' && !this.isRunning()) {
-      this.remainingSeconds.set(value * 60);
+      this.remainingSeconds.set(value);
     }
   }
 
-  protected updateBreakMinutes(event: Event) {
+  protected updateBreakSeconds(event: Event) {
     const value = Number((event.target as HTMLSelectElement).value);
     if (!value) {
       return;
     }
-    this.breakMinutes.set(value);
+    this.breakSeconds.set(value);
 
     if (this.mode() !== 'work' && !this.isRunning()) {
-      this.remainingSeconds.set(this.getDurationForMode(this.mode()) * 60);
+      this.remainingSeconds.set(this.getDurationForMode(this.mode()));
     }
   }
 
@@ -79,7 +96,7 @@ export class App implements OnDestroy {
     this.mode.set(mode);
     this.isRunning.set(false);
     this.clearTimer();
-    this.remainingSeconds.set(this.getDurationForMode(mode) * 60);
+    this.remainingSeconds.set(this.getDurationForMode(mode));
   }
 
   protected toggleTimer() {
@@ -93,7 +110,8 @@ export class App implements OnDestroy {
   protected reset() {
     this.isRunning.set(false);
     this.clearTimer();
-    this.remainingSeconds.set(this.getDurationForMode(this.mode()) * 60);
+    this.mode.set('work');
+    this.remainingSeconds.set(this.getDurationForMode('work'));
   }
 
   protected async toggleOverlay() {
@@ -130,6 +148,13 @@ export class App implements OnDestroy {
     this.clearTimer();
     this.isRunning.set(false);
 
+    const api = window.electronAPI;
+    if (api && typeof api.notifyTimerFinished === 'function') {
+      api.notifyTimerFinished(this.mode());
+    }
+
+    this.playLocalSound();
+
     if (this.mode() === 'work') {
       this.completedPomodoros.update((v) => v + 1);
       const nextMode =
@@ -150,11 +175,26 @@ export class App implements OnDestroy {
   private getDurationForMode(mode: PomodoroMode) {
     switch (mode) {
       case 'work':
-        return this.focusMinutes();
+        return this.focusSeconds();
       case 'short-break':
-        return this.breakMinutes();
+        return this.breakSeconds();
       case 'long-break':
-        return this.breakMinutes() * 3;
+        return this.breakSeconds() * 3;
+    }
+  }
+
+  private playLocalSound() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const audio = new Audio('beep.mp3');
+      audio.volume = 1;
+      // 재생 실패(사용자 제스처 필요 등)는 무시
+      audio.play().catch(() => undefined);
+    } catch {
+      // 무시
     }
   }
 
