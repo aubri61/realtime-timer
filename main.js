@@ -21,19 +21,12 @@ function setOverlayEnabled(enabled) {
 }
 
 function createTrayImage() {
-  // macOS tray는 'template' 이미지면 다크/라이트 모드에 맞춰 자동 반전됨.
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-      <g fill="none" stroke="black" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="9" cy="9.5" r="6.2"/>
-        <path d="M9 3.3v1.0"/>
-        <path d="M9 6.4v3.4l2.3 1.4"/>
-      </g>
-    </svg>
-  `;
-  const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-  const img = nativeImage.createFromDataURL(dataUrl);
-  img.setTemplateImage(true);
+  // macOS 메뉴바용 단색 아이콘 (trayTemplate.png / trayTemplate@2x.png)
+  const imgPath = path.join(__dirname, 'public', 'trayTemplate@2x.png');
+  const img = nativeImage.createFromPath(imgPath);
+  if (!img.isEmpty()) {
+    img.setTemplateImage(true); // 라이트/다크 모드에 맞게 자동 반전
+  }
   return img;
 }
 
@@ -74,6 +67,7 @@ function createWindow() {
     height: 600,
     resizable: false,
     title: 'Realtime Pomodoro Timer',
+    icon: path.join(__dirname, 'public', 'clock.png'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
