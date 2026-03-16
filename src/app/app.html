@@ -47,9 +47,18 @@
         </select>
       </label>
 
-      <button type="button" class="overlay" (click)="toggleOverlay()">
-        오버레이
-      </button>
+      <div class="overlay-toggle-wrapper">
+        <span class="overlay-label">오버레이 모드</span>
+        <button
+          type="button"
+          class="overlay-toggle"
+          [class.overlay-on]="overlayEnabled()"
+          (click)="toggleOverlay()"
+          [attr.aria-pressed]="overlayEnabled()"
+        >
+          <span class="overlay-toggle-thumb"></span>
+        </button>
+      </div>
     </div>
 
     <div class="timer-display">
