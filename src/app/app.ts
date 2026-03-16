@@ -52,6 +52,7 @@ export class App implements OnDestroy {
   protected readonly breakSound = signal<string>('Ping');
 
   protected readonly overlayEnabled = signal(false);
+  protected readonly overlayOpacity = signal(80);
   protected readonly showSettings = signal(false);
   private timerId: ReturnType<typeof setInterval> | null = null;
 
@@ -64,6 +65,13 @@ export class App implements OnDestroy {
       }
       if (savedBreak && SOUND_OPTIONS.includes(savedBreak)) {
         this.breakSound.set(savedBreak);
+      }
+
+      const api = window.electronAPI;
+      if (api && typeof api.getOverlayState === 'function') {
+        api.getOverlayState().then((enabled) => {
+          this.overlayEnabled.set(enabled);
+        });
       }
     }
   }
@@ -181,6 +189,22 @@ export class App implements OnDestroy {
     }
     const next = await api.toggleOverlay();
     this.overlayEnabled.set(next);
+  }
+
+  protected async updateOverlayOpacity(event: Event) {
+    const value = Number((event.target as HTMLInputElement).value);
+    if (!value) {
+      return;
+    }
+
+    this.overlayOpacity.set(value);
+
+    const api = window.electronAPI;
+    if (!api || typeof api.setOverlayOpacity !== 'function') {
+      return;
+    }
+
+    await api.setOverlayOpacity(value);
   }
 
   protected playPreview(name: string) {

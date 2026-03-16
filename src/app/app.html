@@ -1,4 +1,7 @@
-<main class="app-root" *ngIf="!showSettings(); else settingsView">
+<main
+  class="app-root"
+  *ngIf="!showSettings() && !overlayEnabled(); else altView"
+>
   <button
     type="button"
     class="settings-button"
@@ -77,63 +80,124 @@
   </section>
 </main>
 
-<ng-template #settingsView>
-  <main class="app-root">
-    <section class="settings-container" aria-label="설정">
-      <header class="settings-header">
-        <h1>알림음 선택</h1>
-      </header>
+<ng-template #altView>
+  <ng-container *ngIf="showSettings(); else overlayView">
+    <main class="app-root">
+      <section class="settings-container" aria-label="설정">
+        <header class="settings-header">
+          <h1>알림음 선택</h1>
+        </header>
 
-      <div class="settings-body">
-        <label class="field">
-          <span class="field-label">집중시간 종료 알림음</span>
-          <select
-            [value]="workSound()"
-            (change)="updateWorkSound($event)"
-          >
-            <option *ngFor="let s of soundOptions" [value]="s">
-              {{ s }}
-            </option>
-          </select>
+        <div class="settings-body">
+          <label class="field">
+            <span class="field-label">집중시간 종료 알림음</span>
+            <select
+              [value]="workSound()"
+              (change)="updateWorkSound($event)"
+            >
+              <option *ngFor="let s of soundOptions" [value]="s">
+                {{ s }}
+              </option>
+            </select>
+            <button
+              type="button"
+              class="preview-button"
+              (click)="playPreview(workSound())"
+              aria-label="집중시간 알림음 미리듣기"
+            >
+              ▶︎
+            </button>
+          </label>
+
+          <label class="field">
+            <span class="field-label">휴식시간 종료 알림음</span>
+            <select
+              [value]="breakSound()"
+              (change)="updateBreakSound($event)"
+            >
+              <option *ngFor="let s of soundOptions" [value]="s">
+                {{ s }}
+              </option>
+            </select>
+            <button
+              type="button"
+              class="preview-button"
+              (click)="playPreview(breakSound())"
+              aria-label="휴식시간 알림음 미리듣기"
+            >
+              ▶︎
+            </button>
+          </label>
+        </div>
+
+        <footer class="settings-footer">
+          <button type="button" class="secondary" (click)="cancelSettings()">
+            취소
+          </button>
+          <button type="button" class="primary" (click)="saveSettings()">
+            확인
+          </button>
+        </footer>
+      </section>
+    </main>
+  </ng-container>
+
+  <ng-template #overlayView>
+    <main class="app-root app-root--overlay">
+      <section class="overlay-mini" aria-label="오버레이 타이머">
+        <div class="overlay-mode-label">
+          {{ modeLabel() }}
+        </div>
+
+        <div class="overlay-time">
+          {{ formattedTime() }}
+        </div>
+
+        <div class="overlay-row">
           <button
             type="button"
-            class="preview-button"
-            (click)="playPreview(workSound())"
-            aria-label="집중시간 알림음 미리듣기"
+            class="overlay-play-pause"
+            (click)="toggleTimer()"
+            [attr.aria-label]="isRunning() ? '일시정지' : '시작'"
           >
-            ▶︎
+            <span *ngIf="!isRunning()">▶︎</span>
+            <span *ngIf="isRunning()">⏸</span>
           </button>
-        </label>
 
-        <label class="field">
-          <span class="field-label">휴식시간 종료 알림음</span>
-          <select
-            [value]="breakSound()"
-            (change)="updateBreakSound($event)"
-          >
-            <option *ngFor="let s of soundOptions" [value]="s">
-              {{ s }}
-            </option>
-          </select>
+          <div class="overlay-row-right">
+            <button
+              type="button"
+              class="overlay-reset"
+              (click)="reset()"
+              aria-label="리셋"
+            >
+              ↺
+            </button>
+          </div>
+        </div>
+
+        <div class="overlay-bottom-row">
+          <input
+            type="range"
+            min="50"
+            max="100"
+            step="5"
+            class="overlay-opacity-range"
+            [value]="overlayOpacity()"
+            (input)="updateOverlayOpacity($event)"
+            aria-label="투명도 조절"
+          />
+
           <button
             type="button"
-            class="preview-button"
-            (click)="playPreview(breakSound())"
-            aria-label="휴식시간 알림음 미리듣기"
+            class="overlay-exit"
+            (click)="toggleOverlay()"
+            aria-label="크게 보기"
           >
-            ▶︎
+            ⤢
           </button>
-        </label>
-      </div>
-
-      <footer class="settings-footer">
-        <button type="button" class="secondary" (click)="cancelSettings()">
-          취소
-        </button>
-        <button type="button" class="primary" (click)="saveSettings()">
-          확인
-        </button>
-      </footer>
-    </section>
-  </main>
+        </div>
+      </section>
+    </main>
+  </ng-template>
 </ng-template>

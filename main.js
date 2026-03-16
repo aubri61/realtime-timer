@@ -13,6 +13,7 @@ const { exec } = require('child_process');
 let tray = null;
 let mainWindow = null;
 let overlayEnabled = false;
+let overlayOpacity = 0.8;
 
 function setOverlayEnabled(enabled) {
   overlayEnabled = enabled;
@@ -25,6 +26,14 @@ function setOverlayEnabled(enabled) {
   mainWindow.setAlwaysOnTop(enabled, 'floating');
   mainWindow.setVisibleOnAllWorkspaces(enabled, { visibleOnFullScreen: true });
   mainWindow.setFullScreenable(!enabled);
+
+  if (enabled) {
+    mainWindow.setSize(260, 220);
+    mainWindow.setOpacity(overlayOpacity);
+  } else {
+    mainWindow.setSize(420, 600);
+    mainWindow.setOpacity(1);
+  }
 
   return overlayEnabled;
 }
@@ -128,6 +137,25 @@ app.whenReady().then(() => {
     return next;
   });
   ipcMain.handle('overlay:get', () => overlayEnabled);
+  ipcMain.handle('overlay:set-opacity', (_event, percent) => {
+    if (!mainWindow) {
+      return Math.round(overlayOpacity * 100);
+    }
+
+    const numeric = Number(percent);
+    if (!Number.isFinite(numeric)) {
+      return Math.round(overlayOpacity * 100);
+    }
+
+    // 0.2~1.0 사이로 클램프 (20%~100%)
+    overlayOpacity = Math.max(0.2, Math.min(1, numeric / 100));
+
+    if (overlayEnabled) {
+      mainWindow.setOpacity(overlayOpacity);
+    }
+
+    return Math.round(overlayOpacity * 100);
+  });
 
   ipcMain.handle('timer:finished', (_event, mode) => {
     if (!Notification.isSupported()) {
